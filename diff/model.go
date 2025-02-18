@@ -1,5 +1,10 @@
 package diff
 
+import (
+	"fmt"
+	"strings"
+)
+
 type FileContent struct {
 	Lines []string
 }
@@ -35,4 +40,46 @@ type FolderDiff struct {
 	Status     ChangeType   `json:"status"`      // Status of the folder (Added, Removed, Modified)
 	Files      []FileDiff   `json:"files"`       // List of file differences
 	SubFolders []FolderDiff `json:"sub_folders"` // List of sub-folder differences
+}
+
+// Implementing `String()` method for ContentDiff
+func (c ContentDiff) String() string {
+	switch c.Change {
+	case Added:
+		return fmt.Sprintf("  + Line %d: %s", c.LineNumber, c.NewLine)
+	case Removed:
+		return fmt.Sprintf("  - Line %d: %s", c.LineNumber, c.OldLine)
+	case Modified:
+		return fmt.Sprintf("  ~ Line %d: %s -> %s", c.LineNumber, c.OldLine, c.NewLine)
+	default:
+		return ""
+	}
+}
+
+// Implementing `String()` method for FileDiff
+func (f FileDiff) String() string {
+	var sb strings.Builder
+	sb.WriteString(fmt.Sprintf("File: %s (%s)\n", f.FileName, f.Status))
+	for _, diff := range f.Content {
+		sb.WriteString(diff.String() + "\n")
+	}
+	return sb.String()
+}
+
+// Implementing `String()` method for FolderDiff
+func (f FolderDiff) String() string {
+	var sb strings.Builder
+	sb.WriteString(fmt.Sprintf("Folder: %s (%s)\n", f.FolderName, f.Status))
+
+	// Print file diffs
+	for _, file := range f.Files {
+		sb.WriteString(file.String() + "\n")
+	}
+
+	// Print sub-folder diffs recursively
+	for _, subFolder := range f.SubFolders {
+		sb.WriteString(subFolder.String() + "\n")
+	}
+
+	return sb.String()
 }

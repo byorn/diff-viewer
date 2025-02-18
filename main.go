@@ -1,7 +1,11 @@
 package main
 
-import "diffviewer/diff"
+import (
+	"diffviewer/diff"
+	"fmt"
+)
 
 func main() {
-	diff.CompareFolders("sample1", "sample2")
+	fd := diff.CompareFolders("sample1", "sample2")
+	fmt.Println(fd.String())
 }
