@@ -2,8 +2,27 @@ package diff
 
 import (
 	"io/fs"
+	"os"
 	"path/filepath"
 )
+
+func TestFunc(iterator int) FolderDiff {
+	fd := FolderDiff{
+		FolderName: "sample1",
+		Status:     Unchanged,
+	}
+	fd.Files = append(fd.Files, FileDiff{
+		FileName: "sample1.txt",
+		Status:   Modified,
+		Content:  []ContentDiff{},
+	})
+	if iterator == 1 {
+		return fd
+	} else {
+		fd.SubFolders = append(fd.SubFolders, TestFunc(1))
+	}
+	return fd
+}
 
 // CompareFolders recursively compares two folders
 func CompareFolders(oldPath, newPath string) FolderDiff {
@@ -69,9 +88,19 @@ func CompareFolders(oldPath, newPath string) FolderDiff {
 	// Check for added folders
 	for subFolderName, _ := range newSubFolders {
 		if _, exists := oldSubFolders[subFolderName]; !exists {
+
+			newFiles := getFileMap(newPath + "/" + subFolderName)
+			var newFilesDiff []FileDiff
+			for fileName, _ := range newFiles {
+				newFilesDiff = append(newFilesDiff, FileDiff{
+					FileName: fileName,
+					Status:   Added,
+				})
+			}
 			folderDiff.SubFolders = append(folderDiff.SubFolders, FolderDiff{
 				FolderName: subFolderName,
 				Status:     Added,
+				Files:      newFilesDiff,
 			})
 		}
 	}
@@ -82,12 +111,18 @@ func CompareFolders(oldPath, newPath string) FolderDiff {
 // Utility functions
 func getFileMap(folder string) map[string]string {
 	files := make(map[string]string)
-	_ = filepath.Walk(folder, func(path string, info fs.FileInfo, err error) error {
-		if err == nil && !info.IsDir() {
-			files[info.Name()] = path
+
+	entries, err := os.ReadDir(folder)
+	if err != nil {
+		return files // Return empty map on error
+	}
+
+	for _, entry := range entries {
+		if !entry.IsDir() { // Only add files, not directories
+			files[entry.Name()] = filepath.Join(folder, entry.Name())
 		}
-		return nil
-	})
+	}
+
 	return files
 }
 
