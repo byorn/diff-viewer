@@ -2,12 +2,13 @@ package main
 
 import (
 	"diffviewer/dir_details"
+	"diffviewer/github_int"
 	"net/http"
 )
 
 func main() {
 	http.HandleFunc("/dir_tree", corsMiddleware(dir_details.DirTreeHandler))
-
+	http.HandleFunc("/create_issue", corsMiddleware(github_int.CreateGitHubIssue))
 	// Start the HTTP server
 	port := ":8080"
 	println("Server is running on http://localhost" + port)
